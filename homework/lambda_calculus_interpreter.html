@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lambda Calculus 解譯器</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}
+body{max-width:1050px;margin:0 auto;padding:24px}
+h1{margin-bottom:6px} .muted{color:#596579}
+.panel{background:white;border:1px solid #dce2ec;border-radius:14px;padding:18px;margin:16px 0;box-shadow:0 3px 12px #18243a08}
+textarea{width:100%;min-height:92px;box-sizing:border-box;border:1px solid #c5cedd;border-radius:9px;padding:12px;font:16px ui-monospace,monospace}
+button,select{border:1px solid #b9c5d7;border-radius:8px;padding:9px 13px;background:#fff;cursor:pointer;font-size:14px;margin:4px 5px 4px 0}
+button.primary{background:#2357d8;color:white;border-color:#2357d8}
+button:hover{filter:brightness(.97)} .examples{display:flex;flex-wrap:wrap;gap:6px}
+.step{border-left:4px solid #8ba7f8;padding:10px 14px;margin:12px 0;background:#f8faff;border-radius:0 8px 8px 0}
+.step strong{display:block;margin-bottom:5px}.term{font:16px ui-monospace,monospace;overflow-wrap:anywhere}
+.error{color:#b42318;white-space:pre-wrap}.ok{color:#087443}.pill{display:inline-block;background:#eaf0ff;color:#2349a6;border-radius:99px;padding:3px 9px;font-size:12px}
+code{background:#eef1f7;padding:2px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>Lambda Calculus 解譯器</h1>
+<p class="muted">具名稱變數版本｜解析 λ 抽象、函數應用與括號，使用 <b>normal-order（最左外側）β-reduction</b>，逐步列出計算過程。</p>
+<div class="panel">
+  <label for="source"><b>輸入 Lambda Calculus 表達式</b></label>
+  <textarea id="source">((λx. λy. x) a) b</textarea>
+  <p class="muted">語法：<code>λx. M</code> 或 <code>\x. M</code> 表示函數；空白分隔函數應用。變數名稱可用英文字母、數字與底線（不可用數字開頭）。</p>
+  <div class="examples">
+    <button data-ex="(λx. x) y">恆等函數： (λx. x) y</button>
+    <button data-ex="(λx. λy. x) a b">常數函數： (λx. λy. x) a b</button>
+    <button data-ex="(λx. x x) (λx. x x)">Ω：無限循環</button>
+    <button data-ex="(λx. λy. x) y">變數捕捉／α-renaming</button>
+    <button data-ex="(λf. λx. f (f x)) g z">函數組合</button>
+    <button data-ex="(λx. x) ((λy. y) z)">多步化簡</button>
+  </div>
+  <p><button id="run" class="primary">開始計算</button><button id="clear">清除結果</button>
+  <label>最大步數 <select id="limit"><option>20</option><option selected>50</option><option>100</option><option>200</option></select></label></p>
+  <div id="status" aria-live="polite"></div>
+</div>
+<div class="panel">
+  <h2>計算過程</h2>
+  <div id="result" class="muted">輸入表達式後按「開始計算」。</div>
+</div>
+<div class="panel">
+<h2>計算規則簡介</h2>
+<ul>
+<li><b>變數：</b><code>x</code></li>
+<li><b>抽象：</b><code>λx. M</code>，也可以寫成 <code>\x. M</code></li>
+<li><b>應用：</b><code>M N</code>，代表把函數 <code>M</code> 套用到參數 <code>N</code>。</li>
+<li><b>β-reduction：</b><code>(λx. M) N → M[x := N]</code>，即將函數本體中自由出現的 <code>x</code> 替換成 <code>N</code>。</li>
+<li>替換時會進行必要的 α-renaming，避免把參數中的自由變數錯誤地綁定。</li>
+<li>這是具名稱變數的簡化版解譯器，不包含 let、數字運算或型別系統；遇到無限循環會在最大步數處停止。</li>
+</ul>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{$('source').value=b.dataset.ex;}));
+$('clear').onclick=()=>{$('result').textContent='輸入表達式後按「開始計算」。';$('status').textContent='';};
+class Parser{
+ constructor(s){this.s=s.replace(/λ/g,'\\');this.i=0;this.tokens=[];this.tokenize();}
+ tokenize(){const re=/\s+|\\|\.|\(|\)|[A-Za-z_][A-Za-z0-9_]*/gy;while(this.i<this.s.length){re.lastIndex=this.i;const m=re.exec(this.s);if(!m)throw Error('無法辨識的字元：'+this.s[this.i]);this.i=re.lastIndex;if(!/^\s+$/.test(m[0]))this.tokens.push(m[0]);}this.i=0;}
+ peek(){return this.tokens[this.i];} take(){return this.tokens[this.i++];}
+ parse(){const t=this.expr();if(this.i<this.tokens.length)throw Error('多餘的 token：'+this.peek());return t;}
+ expr(){if(this.peek()==='\\'){this.take();const vars=[];while(this.peek() && /^[A-Za-z_]/.test(this.peek()))vars.push(this.take());if(!vars.length)throw Error('λ 後面需要變數名稱');if(this.take()!=='.')throw Error('函數參數後需要「.」');let body=this.expr();for(let j=vars.length-1;j>=0;j--)body={type:'lam',v:vars[j],body};return body;}return this.application();}
+ application(){let node=this.atom();while(this.peek()!==undefined&&this.peek()!==')'&&this.peek()!=='.'){if(this.peek()==='\\') {node={type:'app',fn:node,arg:this.expr()};break;}node={type:'app',fn:node,arg:this.atom()};}return node;}
+ atom(){const t=this.take();if(t===undefined)throw Error('表達式不完整');if(t==='('){const n=this.expr();if(this.take()!==')')throw Error('缺少右括號 )');return n;}if(t==='\\'){this.i--;return this.expr();}if(/^[A-Za-z_]/.test(t))return {type:'var',name:t};throw Error('不預期的 token：'+t);}
+}
+function clone(n){if(n.type==='var')return {...n};if(n.type==='lam')return {type:'lam',v:n.v,body:clone(n.body)};return {type:'app',fn:clone(n.fn),arg:clone(n.arg)};}
+function freeVars(n){if(n.type==='var')return new Set([n.name]);if(n.type==='app')return new Set([...freeVars(n.fn),...freeVars(n.arg)]);let s=freeVars(n.body);s.delete(n.v);return s;}
+function allNames(n){if(n.type==='var')return new Set([n.name]);if(n.type==='app')return new Set([...allNames(n.fn),...allNames(n.arg)]);return new Set([n.v,...allNames(n.body)]);}
+function fresh(base,used){let i=0,c;do{c=base+"_"+(++i);}while(used.has(c));return c;}
+function renameBound(n,oldName,newName){if(n.type==='var')return {type:'var',name:n.name===oldName?newName:n.name};if(n.type==='app')return {type:'app',fn:renameBound(n.fn,oldName,newName),arg:renameBound(n.arg,oldName,newName)};if(n.v===oldName)return clone(n);return {type:'lam',v:n.v,body:renameBound(n.body,oldName,newName)};}
+function subst(n,x,arg){
+ if(n.type==='var')return {type:'var',name:n.name===x?null:n.name}; // placeholder handled below
+ if(n.type==='app')return {type:'app',fn:subst(n.fn,x,arg),arg:subst(n.arg,x,arg)};
+ if(n.v===x)return clone(n);
+ let body=n.body, v=n.v, argFree=freeVars(arg);
+ if(argFree.has(v)&&freeVars(body).has(x)){const used=new Set([...allNames(body),...allNames(arg),x]);const nv=fresh(v,used);body=renameBound(body,v,nv);v=nv;}
+ return {type:'lam',v,body:subst(body,x,arg)};
+}
+function substitute(n,x,arg){
+ if(n.type==='var')return n.name===x?clone(arg):clone(n);
+ if(n.type==='app')return {type:'app',fn:substitute(n.fn,x,arg),arg:substitute(n.arg,x,arg)};
+ if(n.v===x)return clone(n);
+ let body=n.body,v=n.v;
+ if(freeVars(arg).has(v)&&freeVars(body).has(x)){const used=new Set([...allNames(body),...allNames(arg),x]);const nv=fresh(v,used);body=renameBound(body,v,nv);v=nv;}
+ return {type:'lam',v,body:substitute(body,x,arg)};
+}
+function fmt(n,parent=0){if(n.type==='var')return n.name;if(n.type==='lam'){const s='λ'+n.v+'. '+fmt(n.body,0);return parent>0?'('+s+')':s;}const s=fmt(n.fn,1)+' '+fmt(n.arg,2);return parent>1?'('+s+')':s;}
+function reduceOne(n){
+ // Normal-order: reduce the leftmost outermost redex first.
+ if(n.type==='app'){
+  if(n.fn.type==='lam')return {node:substitute(n.fn.body,n.fn.v,n.arg),rule:'β-reduction：將 '+n.fn.v+' 替換為 '+fmt(n.arg),redex:fmt(n)};
+  const left=reduceOne(n.fn);if(left)return {node:{type:'app',fn:left.node,arg:n.arg},rule:left.rule,redex:left.redex};
+  const right=reduceOne(n.arg);if(right)return {node:{type:'app',fn:n.fn,arg:right.node},rule:right.rule,redex:right.redex};
+ }
+ if(n.type==='lam'){const r=reduceOne(n.body);if(r)return {node:{type:'lam',v:n.v,body:r.node},rule:r.rule,redex:r.redex};}
+ return null;
+}
+$('run').onclick=()=>{
+ $('result').innerHTML='';$('status').textContent='';
+ try{
+  const original=new Parser($('source').value).parse();
+  let current=original, count=0, seen=new Set();
+  const add=(title,term,detail='')=>{const d=document.createElement('div');d.className='step';const h=document.createElement('strong');h.textContent=title;const p=document.createElement('div');p.className='term';p.textContent=term;d.append(h,p);if(detail){const q=document.createElement('div');q.className='muted';q.textContent=detail;d.append(q);} $('result').append(d);};
+  add('Step 0｜原始表達式',fmt(current));
+  const limit=Number($('limit').value);
+  while(count<limit){
+   const key=fmt(current);if(seen.has(key)){ $('status').innerHTML='<span class="error">偵測到重複表達式，可能正在循環；已停止。</span>';return;}seen.add(key);
+   const r=reduceOne(current);if(!r){$('status').innerHTML='<span class="ok">✓ 化簡完成，共 '+count+' 次 β-reduction。</span>';return;}
+   current=r.node;count++;add('Step '+count+'｜'+r.rule,fmt(current),'本次被化簡的 redex：'+r.redex);
+  }
+  if(reduceOne(current))$('status').innerHTML='<span class="error">已達最大步數 '+limit+'，目前結果可能尚未化簡完成。</span>';
+  else $('status').innerHTML='<span class="ok">✓ 化簡完成，共 '+count+' 次 β-reduction。</span>';
+ }catch(e){$('status').innerHTML='<span class="error">輸入錯誤：'+e.message+'</span>';}
+};
+</script>
+</body>
+</html>
