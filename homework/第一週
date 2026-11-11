@@ -1,0 +1,55 @@
+
+import time
+
+# 方法 1：直接使用次方
+def power2n_1(n):
+    return 2 ** n
+
+
+# 方法 2a：遞迴（兩次呼叫）
+def power2n_2a(n):
+    if n == 0:
+        return 1
+    return power2n_2a(n-1) + power2n_2a(n-1)
+
+
+# 方法 2b：遞迴（一次呼叫）
+def power2n_2b(n):
+    if n == 0:
+        return 1
+    return 2 * power2n_2b(n-1)
+
+
+# 方法 3：遞迴 + 查表
+memo = {0: 1}
+
+def power2n_3(n):
+    if n not in memo:
+        memo[n] = power2n_3(n-1) + power2n_3(n-1)
+    return memo[n]
+
+
+# 主程式：測試所有方法
+n = 100
+
+functions = [
+    ("方法1：直接次方", power2n_1),
+    ("方法2a：兩次遞迴", power2n_2a),
+    ("方法2b：一次遞迴", power2n_2b),
+    ("方法3：遞迴加查表", power2n_3)
+]
+
+for name, func in functions:
+    start = time.perf_counter()
+
+    try:
+        result = func(n)
+        end = time.perf_counter()
+
+        print(name)
+        print("結果：", result)
+        print("執行時間：", end - start, "秒")
+        print("-------------------------")
+
+    except RecursionError:
+        print(name, "發生遞迴錯誤")
