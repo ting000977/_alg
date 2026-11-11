@@ -1,12 +1,14 @@
----期中---
-繳交總覽表格
-作業項目	繳交狀態	連結
-習題1	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%80%E9%80%B1
-習題2	準時繳交 https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%BA%8C%E9%80%B1
-習題3	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%89%E9%80%B1
-習題 4	準時繳交 https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%9B%9B%E9%80%B1.py
-習題 5	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%BA%94%E9%80%B1.py
-習題 6	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%85%AD%E9%80%B1
-習題 7	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%83%E9%80%B1.py
-習題 8	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%85%AB%E9%80%B1
-習題 9	準時繳交	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B9%9D%E9%80%B1
+期中
+| 第幾週 | 習題內容             | 有上課且準時繳交 | 補交 | 附上請假證明 | 作業連結          |
+| :----: | :------------------- | :--------------: | :--: | :----------: | :---------------- |
+| 1      | 查表法               | 是               |      |              |  https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%80%E9%80%B1                 |
+| 2      | 複雜度               | 是               |      |              |  https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%BA%8C%E9%80%B1              |
+| 3      | 列舉＋暴力           | 是               |      |              |   https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%89%E9%80%B1                |
+| 4      | 迭代法               | 是             |        |      |  https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%9B%9B%E9%80%B1.py                 |
+| 5      | 遞迴，函數式編程     | 是               |      |              | https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%BA%94%E9%80%B1.py|
+| 6      | Lambda Calculus      | 是               |      |              | https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%85%AD%E9%80%B1                 |
+| 7      | 動態規劃與文字算法   | 是               |      |              |  https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B8%83%E9%80%B1.py                 |
+| 8      | 優化算法             | 是               |      |              | 	https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E5%85%AB%E9%80%B1                  |
+| 9      | 搜尋算法             | 是               |      |              |    https://github.com/ting000977/_alg/blob/main/homework/%E7%AC%AC%E4%B9%9D%E9%80%B1               |
+
+[week5-fp-lambda]: https://github.com/ccc115a/alg/tree/main/_more/homework/week5-fp-lambda
