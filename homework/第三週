@@ -1,0 +1,53 @@
+from itertools import product
+
+# SAT 真值表解題程式
+
+def SAT(variables, formula):
+    print("變數：", variables)
+    print("布林公式：", formula)
+    print("-" * 50)
+
+    count = 0
+    solutions = []
+
+    # 系統性列舉所有 True / False 組合
+    for values in product([False, True], repeat=len(variables)):
+
+        # 建立變數對應的真假值
+        assignment = dict(zip(variables, values))
+
+        # 計算公式結果
+        result = formula(assignment)
+
+        count += 1
+
+        # 顯示真值表
+        print(assignment, "=>", result)
+
+        # 如果結果為 True，代表找到解答
+        if result:
+            solutions.append(assignment)
+
+    print("-" * 50)
+
+    # 判斷 SAT 是否有解
+    if solutions:
+        print("結果：SAT（可以滿足）")
+        print("找到", len(solutions), "組解答：")
+
+        for solution in solutions:
+            print(solution)
+    else:
+        print("結果：UNSAT（無法滿足）")
+
+    print("總共測試", count, "種組合")
+
+
+# 測試範例：
+# (A OR B) AND (NOT A OR C)
+
+variables = ["A", "B", "C"]
+
+formula = lambda v: (v["A"] or v["B"]) and ((not v["A"]) or v["C"])
+
+SAT(variables, formula)
