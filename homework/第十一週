@@ -1,0 +1,290 @@
+
+"""
+數值微分、數值積分與蒙地卡羅法
+
+AI 使用聲明：
+本程式有使用 AI 協助撰寫及整理，
+並由使用者自行執行與測試。
+"""
+
+import random
+from itertools import product
+
+
+# =====================================
+# 1. 單變數數值微分（中央差分法）
+# =====================================
+
+def derivative(f, x, h=1e-5):
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+
+# =====================================
+# 2. 單變數數值積分（黎曼積分法）
+# =====================================
+
+def integral_1d(f, low, high, n=10000):
+    if n <= 0:
+        raise ValueError("n 必須大於 0")
+
+    if high < low:
+        return -integral_1d(f, high, low, n)
+
+    dx = (high - low) / n
+
+    total = 0
+
+    for i in range(n):
+        x = low + (i + 0.5) * dx
+        total += f(x)
+
+    return total * dx
+
+
+# =====================================
+# 3. 單變數蒙地卡羅積分
+# =====================================
+
+def monte_carlo_integral_1d(f, low, high, samples=100000):
+    random.seed(0)
+
+    total = 0
+
+    for i in range(samples):
+        x = random.uniform(low, high)
+        total += f(x)
+
+    return (high - low) * total / samples
+
+
+# =====================================
+# 4. n 變數數值微分（梯度）
+# =====================================
+
+def gradient(f, point, h=1e-5):
+
+    result = []
+
+    for i in range(len(point)):
+
+        plus = list(point)
+        minus = list(point)
+
+        plus[i] += h
+        minus[i] -= h
+
+        value = (f(plus) - f(minus)) / (2 * h)
+
+        result.append(value)
+
+    return result
+
+
+# =====================================
+# 5. n 變數黎曼積分
+# =====================================
+
+def integral(f, low, high, n=10, max_cells=1000000):
+
+    if len(low) != len(high):
+        raise ValueError("維度不一致")
+
+    if len(low) == 0:
+        raise ValueError("至少需要一個維度")
+
+    if n <= 0:
+        raise ValueError("n 必須大於 0")
+
+    sign = 1
+
+    new_low = []
+    new_high = []
+
+    for a, b in zip(low, high):
+
+        if b < a:
+            sign *= -1
+            a, b = b, a
+
+        new_low.append(a)
+        new_high.append(b)
+
+    low = new_low
+    high = new_high
+
+    dimensions = len(low)
+
+    total_cells = n ** dimensions
+
+    if total_cells > max_cells:
+        raise ValueError("計算量太大，請降低 n")
+
+    widths = [
+        (high[i] - low[i]) / n
+        for i in range(dimensions)
+    ]
+
+    volume = 1
+
+    for width in widths:
+        volume *= width
+
+    total = 0
+
+    for indices in product(range(n), repeat=dimensions):
+
+        point = []
+
+        for d in range(dimensions):
+
+            x = low[d] + (indices[d] + 0.5) * widths[d]
+
+            point.append(x)
+
+        total += f(point)
+
+    return sign * total * volume
+
+
+# =====================================
+# 6. n 變數蒙地卡羅積分
+# =====================================
+
+def monte_carlo_integral_nd(f, low, high, samples=100000):
+
+    if len(low) != len(high):
+        raise ValueError("維度不一致")
+
+    if len(low) == 0:
+        raise ValueError("至少需要一個維度")
+
+    if samples <= 0:
+        raise ValueError("samples 必須大於 0")
+
+    random.seed(0)
+
+    sign = 1
+    volume = 1
+
+    bounds = []
+
+    for a, b in zip(low, high):
+
+        if b < a:
+            sign *= -1
+            a, b = b, a
+
+        bounds.append((a, b))
+
+        volume *= (b - a)
+
+    total = 0
+
+    for i in range(samples):
+
+        point = []
+
+        for a, b in bounds:
+
+            x = random.uniform(a, b)
+
+            point.append(x)
+
+        total += f(point)
+
+    return sign * volume * total / samples
+
+
+# =====================================
+# 範例函數：
+# f(x1,x2,...,xn) = x1²+x2²+...+xn²
+# =====================================
+
+def sum_of_squares(point):
+
+    return sum(x ** 2 for x in point)
+
+
+# =====================================
+# 測試範例
+# =====================================
+
+def main():
+
+    print("===== 1. 單變數數值微分 =====")
+
+    f = lambda x: x ** 2
+
+    print("f(x) = x²")
+    print("x = 3")
+
+    print("微分結果：", derivative(f, 3))
+
+    print("\n===== 2. 單變數黎曼積分 =====")
+
+    print("積分 x²，範圍 0 到 1")
+
+    print("積分結果：",
+          integral_1d(f, 0, 1))
+
+    print("\n===== 3. 單變數蒙地卡羅積分 =====")
+
+    print("積分結果：",
+          monte_carlo_integral_1d(f, 0, 1))
+
+    print("\n===== 4. n 變數梯度 =====")
+
+    f2 = lambda p: p[0]**2 + p[1]**2
+
+    print("f(x,y) = x² + y²")
+
+    print("點 (3,4) 的梯度：",
+          gradient(f2, [3, 4]))
+
+    print("\n===== 5. n 變數黎曼積分 =====")
+
+    print("f(x1,...,xn) = x1²+...+xn²")
+    print("low = 0, high = 1")
+
+    for dim, n in [(1, 1000), (2, 200),
+                   (5, 10), (100, 1)]:
+
+        low = [0] * dim
+        high = [1] * dim
+
+        result = integral(
+            sum_of_squares,
+            low,
+            high,
+            n
+        )
+
+        print(
+            dim, "維積分結果：",
+            result,
+            "理論值：", dim / 3
+        )
+
+    print("\n===== 6. n 變數蒙地卡羅積分 =====")
+
+    for dim in [1, 2, 5, 100]:
+
+        low = [0] * dim
+        high = [1] * dim
+
+        result = monte_carlo_integral_nd(
+            sum_of_squares,
+            low,
+            high,
+            200000
+        )
+
+        print(
+            dim, "維積分結果：",
+            result,
+            "理論值：", dim / 3
+        )
+
+
+if __name__ == "__main__":
+    main()
